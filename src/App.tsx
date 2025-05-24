@@ -10,7 +10,7 @@ import { AIOrchestrator } from '@/components/AIOrchestrator';
 import { Navigation } from '@/components/Navigation';
 import NotFound from "./pages/NotFound";
 import { PostOperative } from '@/components/PostOperative';
-import SurgicalRequestUpload from '@/components/SurgicalRequestUpload';
+import { SurgicalRequestUpload } from '@/components/SurgicalRequestUpload';
 
 const queryClient = new QueryClient({
   defaultOptions: {
