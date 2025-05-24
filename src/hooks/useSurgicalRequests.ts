@@ -24,6 +24,30 @@ export interface CreateSurgicalRequestData {
   opmeCompanies?: string[];
 }
 
+export interface SurgicalAgentData {
+  assessmentData: {
+    patient_name: string;
+    patient_cpf?: string;
+    patient_health_plan?: string;
+    clinical_note: string;
+    patient_email?: string;
+  };
+  procedureData: {
+    procedure_name: string;
+    urgency_level: string;
+    icd10_code?: string;
+    procedure_codes?: string[];
+  };
+  doctorData: {
+    doctor_name: string;
+    specialty: string;
+    crm: string;
+    clinic_address?: string;
+    clinic_phone?: string;
+    clinic_email?: string;
+  };
+}
+
 export const useSurgicalRequests = () => {
   const queryClient = useQueryClient();
 
@@ -42,6 +66,36 @@ export const useSurgicalRequests = () => {
       }
 
       return data.data as SurgicalRequest[];
+    }
+  });
+
+  const generateSurgicalReport = useMutation({
+    mutationFn: async (agentData: SurgicalAgentData) => {
+      console.log('Generating surgical report with AI agent:', agentData);
+      const { data, error } = await supabase.functions.invoke('openai-surgical-agent', {
+        body: agentData
+      });
+
+      if (error) {
+        console.error('Error generating surgical report:', error);
+        throw error;
+      }
+
+      return data;
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Sucesso",
+        description: "Relatório cirúrgico gerado com sucesso",
+      });
+    },
+    onError: (error: any) => {
+      console.error('Error in generateSurgicalReport:', error);
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao gerar relatório cirúrgico",
+        variant: "destructive",
+      });
     }
   });
 
@@ -119,6 +173,7 @@ export const useSurgicalRequests = () => {
     error: surgicalRequestsQuery.error,
     createSurgicalRequest,
     updateSurgicalRequestStatus,
+    generateSurgicalReport,
     refetch: surgicalRequestsQuery.refetch
   };
 };
