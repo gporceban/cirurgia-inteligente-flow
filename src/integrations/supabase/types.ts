@@ -616,6 +616,53 @@ export type Database = {
         }
         Relationships: []
       }
+      post_operative_follow_ups: {
+        Row: {
+          complications: string | null
+          created_at: string
+          created_by: string
+          follow_up_date: string
+          id: string
+          next_follow_up_date: string | null
+          notes: string | null
+          patient_condition: string | null
+          status: string
+          surgical_request_id: string
+        }
+        Insert: {
+          complications?: string | null
+          created_at?: string
+          created_by: string
+          follow_up_date: string
+          id?: string
+          next_follow_up_date?: string | null
+          notes?: string | null
+          patient_condition?: string | null
+          status: string
+          surgical_request_id: string
+        }
+        Update: {
+          complications?: string | null
+          created_at?: string
+          created_by?: string
+          follow_up_date?: string
+          id?: string
+          next_follow_up_date?: string | null
+          notes?: string | null
+          patient_condition?: string | null
+          status?: string
+          surgical_request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_operative_follow_ups_surgical_request_id_fkey"
+            columns: ["surgical_request_id"]
+            isOneToOne: false
+            referencedRelation: "surgical_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       presentation_downloads: {
         Row: {
           created_at: string
@@ -934,6 +981,107 @@ export type Database = {
         }
         Relationships: []
       }
+      surgical_requests: {
+        Row: {
+          approved_at: string | null
+          assessment_id: string
+          clinical_indication: string
+          created_at: string
+          doctor_id: string
+          estimated_duration: number | null
+          hospital_location: string | null
+          icd10_code: string
+          id: string
+          medical_report: string | null
+          notes: string | null
+          opme_companies: string[] | null
+          opme_materials: Json | null
+          patient_cpf: string | null
+          patient_email: string | null
+          patient_health_plan: string | null
+          patient_id: string
+          patient_name: string
+          patient_phone: string | null
+          procedure_codes: string[] | null
+          procedure_name: string
+          rejection_reason: string | null
+          scheduled_date: string | null
+          status: string
+          submitted_at: string | null
+          surgery_completed_at: string | null
+          updated_at: string
+          urgency_level: string
+        }
+        Insert: {
+          approved_at?: string | null
+          assessment_id: string
+          clinical_indication: string
+          created_at?: string
+          doctor_id: string
+          estimated_duration?: number | null
+          hospital_location?: string | null
+          icd10_code: string
+          id?: string
+          medical_report?: string | null
+          notes?: string | null
+          opme_companies?: string[] | null
+          opme_materials?: Json | null
+          patient_cpf?: string | null
+          patient_email?: string | null
+          patient_health_plan?: string | null
+          patient_id: string
+          patient_name: string
+          patient_phone?: string | null
+          procedure_codes?: string[] | null
+          procedure_name: string
+          rejection_reason?: string | null
+          scheduled_date?: string | null
+          status?: string
+          submitted_at?: string | null
+          surgery_completed_at?: string | null
+          updated_at?: string
+          urgency_level: string
+        }
+        Update: {
+          approved_at?: string | null
+          assessment_id?: string
+          clinical_indication?: string
+          created_at?: string
+          doctor_id?: string
+          estimated_duration?: number | null
+          hospital_location?: string | null
+          icd10_code?: string
+          id?: string
+          medical_report?: string | null
+          notes?: string | null
+          opme_companies?: string[] | null
+          opme_materials?: Json | null
+          patient_cpf?: string | null
+          patient_email?: string | null
+          patient_health_plan?: string | null
+          patient_id?: string
+          patient_name?: string
+          patient_phone?: string | null
+          procedure_codes?: string[] | null
+          procedure_name?: string
+          rejection_reason?: string | null
+          scheduled_date?: string | null
+          status?: string
+          submitted_at?: string | null
+          surgery_completed_at?: string | null
+          updated_at?: string
+          urgency_level?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "surgical_requests_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "patient_assessments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       system_documentation: {
         Row: {
           content: string
@@ -1027,6 +1175,18 @@ export type Database = {
         Args: { table_name: string }
         Returns: boolean
       }
+      create_surgical_request_from_assessment: {
+        Args: {
+          p_assessment_id: string
+          p_procedure_name: string
+          p_procedure_codes: string[]
+          p_icd10_code: string
+          p_urgency_level: string
+          p_opme_materials?: Json
+          p_opme_companies?: string[]
+        }
+        Returns: string
+      }
       doctor_approval_claims: {
         Args: { uid: string }
         Returns: Json
@@ -1059,6 +1219,19 @@ export type Database = {
           specialty: string
           full_name: string
           email: string
+        }[]
+      }
+      get_surgical_requests_dashboard: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          procedure_name: string
+          patient_name: string
+          status: string
+          urgency_level: string
+          created_at: string
+          scheduled_date: string
+          is_doctor_view: boolean
         }[]
       }
       http: {
