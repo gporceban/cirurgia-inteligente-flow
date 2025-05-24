@@ -290,6 +290,53 @@ export type Database = {
         }
         Relationships: []
       }
+      doctor_follow_up_schedule: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          doctor_id: string
+          follow_up_type: string
+          id: string
+          notes: string | null
+          patient_id: string
+          report_id: string
+          scheduled_date: string
+          status: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          doctor_id: string
+          follow_up_type: string
+          id?: string
+          notes?: string | null
+          patient_id: string
+          report_id: string
+          scheduled_date: string
+          status?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          doctor_id?: string
+          follow_up_type?: string
+          id?: string
+          notes?: string | null
+          patient_id?: string
+          report_id?: string
+          scheduled_date?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doctor_follow_up_schedule_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "post_operative_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       doctor_notifications: {
         Row: {
           created_at: string
@@ -662,6 +709,86 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      post_operative_reminders: {
+        Row: {
+          category: string
+          completed_at: string | null
+          created_at: string
+          description: string
+          id: string
+          is_completed: boolean | null
+          report_id: string
+          title: string
+        }
+        Insert: {
+          category: string
+          completed_at?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          is_completed?: boolean | null
+          report_id: string
+          title: string
+        }
+        Update: {
+          category?: string
+          completed_at?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          is_completed?: boolean | null
+          report_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_operative_reminders_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "post_operative_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      post_operative_reports: {
+        Row: {
+          created_at: string
+          doctor_id: string
+          id: string
+          original_report_url: string
+          patient_id: string
+          recommendations: string | null
+          surgery_summary: string | null
+          surgical_request_id: string
+          technical_details: Json | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          doctor_id: string
+          id?: string
+          original_report_url: string
+          patient_id: string
+          recommendations?: string | null
+          surgery_summary?: string | null
+          surgical_request_id: string
+          technical_details?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          doctor_id?: string
+          id?: string
+          original_report_url?: string
+          patient_id?: string
+          recommendations?: string | null
+          surgery_summary?: string | null
+          surgical_request_id?: string
+          technical_details?: Json | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       presentation_downloads: {
         Row: {

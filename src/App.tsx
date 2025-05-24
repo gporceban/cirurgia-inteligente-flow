@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -10,6 +9,7 @@ import { DataCapture } from '@/components/DataCapture';
 import { AIOrchestrator } from '@/components/AIOrchestrator';
 import { Navigation } from '@/components/Navigation';
 import NotFound from "./pages/NotFound";
+import { PostOperative } from '@/components/PostOperative';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -34,6 +34,7 @@ const App: React.FC = () => {
                 <Route path="/" element={<SurgicalDashboard />} />
                 <Route path="/capture" element={<DataCapture />} />
                 <Route path="/orchestrator" element={<AIOrchestrator />} />
+                <Route path="/post-operative" element={<PostOperative />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </main>

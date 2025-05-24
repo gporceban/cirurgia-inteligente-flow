@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -11,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Home, Clock, FileText, ChevronDown, Activity } from 'lucide-react';
+import { Home, Clock, FileText, ChevronDown, Activity, Heart } from 'lucide-react';
 
 export const Navigation = () => {
   const location = useLocation();
@@ -20,6 +19,7 @@ export const Navigation = () => {
     { path: '/', label: 'Dashboard', icon: Home },
     { path: '/capture', label: 'Captura de Dados', icon: FileText },
     { path: '/orchestrator', label: 'IA Orquestrador', icon: Clock },
+    { path: '/post-operative', label: 'Pós-Operatório', icon: Heart },
   ];
 
   const getCurrentPageLabel = () => {
