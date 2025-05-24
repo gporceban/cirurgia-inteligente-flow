@@ -4,356 +4,256 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { AlertCircle, CheckCircle, Clock, Play, Pause, Settings } from 'lucide-react';
-import { OpenAIService, SurgicalWorkflowPayload } from '@/services/openai';
-import { toast } from '@/hooks/use-toast';
+import { Play, Pause, RefreshCw, CheckCircle, AlertCircle, Clock, Brain } from 'lucide-react';
 
-interface WorkflowStep {
-  id: string;
-  agent: string;
-  name: string;
-  status: 'pending' | 'running' | 'completed' | 'error' | 'paused';
-  result?: any;
-  error?: string;
-  duration?: number;
-}
+export const AIWorkflowOrchestrator = () => {
+  const [isRunning, setIsRunning] = useState(false);
+  const [progress, setProgress] = useState(0);
 
-interface WorkflowExecution {
-  id: string;
-  patientName: string;
-  procedure: string;
-  status: 'draft' | 'running' | 'paused' | 'completed' | 'error';
-  progress: number;
-  steps: WorkflowStep[];
-  startTime: Date;
-  endTime?: Date;
-  payload: SurgicalWorkflowPayload;
-}
-
-export const AIWorkflowOrchestrator: React.FC = () => {
-  const [executions, setExecutions] = useState<WorkflowExecution[]>([]);
-  const [openaiApiKey, setOpenaiApiKey] = useState<string>('');
-  const [isConfigured, setIsConfigured] = useState(false);
-
-  const defaultSteps: Omit<WorkflowStep, 'id'>[] = [
-    { agent: 'ClinicalAnalyst', name: 'Análise Clínica', status: 'pending' },
-    { agent: 'ANSSubmissionAgent', name: 'Preparação ANS', status: 'pending' },
-    { agent: 'SchedulingAgent', name: 'Agendamento', status: 'pending' },
-    { agent: 'PatientCommunicationAgent', name: 'Comunicação Paciente', status: 'pending' },
+  const workflowSteps = [
+    {
+      id: 1,
+      name: 'Análise Inicial',
+      status: 'completed',
+      description: 'Avaliação dos dados do paciente'
+    },
+    {
+      id: 2,
+      name: 'Validação Clínica',
+      status: 'running',
+      description: 'Verificação dos protocolos médicos'
+    },
+    {
+      id: 3,
+      name: 'Geração de Relatório',
+      status: 'pending',
+      description: 'Criação do relatório cirúrgico'
+    },
+    {
+      id: 4,
+      name: 'Aprovação Final',
+      status: 'pending',
+      description: 'Revisão e aprovação do documento'
+    }
   ];
 
-  const startWorkflow = async (patientData: any) => {
-    if (!isConfigured) {
-      toast({
-        title: 'Configuração Necessária',
-        description: 'Configure a chave da API OpenAI primeiro.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    const executionId = `WF-${Date.now()}`;
-    const steps: WorkflowStep[] = defaultSteps.map((step, index) => ({
-      ...step,
-      id: `${executionId}-${index}`,
-    }));
-
-    const payload: SurgicalWorkflowPayload = {
-      prompt: `Processar solicitação cirúrgica para ${patientData.name}`,
-      patientData: patientData,
-      template: {
-        language: 'pt-BR',
-        format: 'medical_report',
-      },
-      scratch: {},
-    };
-
-    const execution: WorkflowExecution = {
-      id: executionId,
-      patientName: patientData.name,
-      procedure: patientData.procedure,
-      status: 'running',
-      progress: 0,
-      steps,
-      startTime: new Date(),
-      payload,
-    };
-
-    setExecutions(prev => [...prev, execution]);
-
-    // Execute workflow
-    await executeWorkflowSteps(execution);
-  };
-
-  const executeWorkflowSteps = async (execution: WorkflowExecution) => {
-    const openaiService = new OpenAIService(openaiApiKey);
-    let previousResponseId: string | undefined;
-    let currentPayload = { ...execution.payload };
-
-    for (let i = 0; i < execution.steps.length; i++) {
-      const step = execution.steps[i];
-      
-      // Update step status to running
-      updateStepStatus(execution.id, step.id, 'running');
-      
-      try {
-        const startTime = Date.now();
-        
-        const response = await openaiService.executeSurgicalAgent(
-          step.agent,
-          currentPayload,
-          previousResponseId
-        );
-
-        const duration = Date.now() - startTime;
-        
-        // Update payload with agent results
-        if (response.output_text) {
-          try {
-            const agentResult = JSON.parse(response.output_text);
-            currentPayload = agentResult;
-          } catch (e) {
-            console.warn('Failed to parse agent response as JSON:', e);
-          }
-        }
-
-        updateStepStatus(execution.id, step.id, 'completed', {
-          result: response,
-          duration,
-        });
-
-        previousResponseId = response.id;
-        
-        // Update overall progress
-        const progress = ((i + 1) / execution.steps.length) * 100;
-        updateExecutionProgress(execution.id, progress);
-
-        // Small delay between steps for better UX
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-      } catch (error) {
-        console.error(`Error in step ${step.name}:`, error);
-        updateStepStatus(execution.id, step.id, 'error', {
-          error: error instanceof Error ? error.message : 'Unknown error',
-        });
-        
-        updateExecutionStatus(execution.id, 'error');
-        break;
-      }
-    }
-
-    // Mark workflow as completed if all steps succeeded
-    const completedSteps = execution.steps.filter(s => s.status === 'completed').length;
-    if (completedSteps === execution.steps.length) {
-      updateExecutionStatus(execution.id, 'completed');
-      
-      toast({
-        title: 'Workflow Concluído',
-        description: `Processamento para ${execution.patientName} finalizado com sucesso.`,
-      });
-    }
-  };
-
-  const updateStepStatus = (
-    executionId: string, 
-    stepId: string, 
-    status: WorkflowStep['status'],
-    extra?: { result?: any; error?: string; duration?: number }
-  ) => {
-    setExecutions(prev => prev.map(exec => {
-      if (exec.id === executionId) {
-        return {
-          ...exec,
-          steps: exec.steps.map(step => {
-            if (step.id === stepId) {
-              return { ...step, status, ...extra };
-            }
-            return step;
-          }),
-        };
-      }
-      return exec;
-    }));
-  };
-
-  const updateExecutionProgress = (executionId: string, progress: number) => {
-    setExecutions(prev => prev.map(exec => 
-      exec.id === executionId ? { ...exec, progress } : exec
-    ));
-  };
-
-  const updateExecutionStatus = (executionId: string, status: WorkflowExecution['status']) => {
-    setExecutions(prev => prev.map(exec => 
-      exec.id === executionId 
-        ? { ...exec, status, endTime: status === 'completed' ? new Date() : undefined } 
-        : exec
-    ));
-  };
-
-  const getStepIcon = (status: WorkflowStep['status']) => {
+  const getStatusIcon = (status: string) => {
     switch (status) {
       case 'completed':
-        return <CheckCircle className="w-4 h-4 text-green-600" />;
+        return <CheckCircle className="w-5 h-5 text-green-600" />;
       case 'running':
-        return <div className="w-4 h-4 rounded-full border-2 border-blue-600 border-t-transparent animate-spin" />;
-      case 'error':
-        return <AlertCircle className="w-4 h-4 text-red-600" />;
-      case 'paused':
-        return <Pause className="w-4 h-4 text-yellow-600" />;
+        return <RefreshCw className="w-5 h-5 text-blue-600 animate-spin" />;
+      case 'pending':
+        return <Clock className="w-5 h-5 text-gray-400" />;
       default:
-        return <Clock className="w-4 h-4 text-gray-400" />;
+        return <AlertCircle className="w-5 h-5 text-red-600" />;
     }
   };
 
-  const getStatusColor = (status: WorkflowExecution['status']) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case 'running': return 'bg-blue-100 text-blue-800';
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'error': return 'bg-red-100 text-red-800';
-      case 'paused': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'completed':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'running':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'pending':
+        return 'bg-gray-100 text-gray-600 border-gray-200';
+      default:
+        return 'bg-red-100 text-red-800 border-red-200';
     }
   };
 
-  // Demo data for testing
-  const demoPatientData = {
-    name: 'Maria Santos',
-    procedure: 'Artrodese L4-L5',
-    clinicalNotes: 'Dor lombar crônica, estenose foraminal bilateral L4-L5, falha no tratamento conservador.',
-    demographics: {
-      age: 65,
-      gender: 'F',
-      insurance: 'Unimed',
-      phone: '(11) 99999-9999'
-    }
+  const handleStart = () => {
+    setIsRunning(true);
+    // Simulate workflow progress
+    const interval = setInterval(() => {
+      setProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          setIsRunning(false);
+          return 100;
+        }
+        return prev + 10;
+      });
+    }, 500);
+  };
+
+  const handleStop = () => {
+    setIsRunning(false);
+    setProgress(0);
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">AI Workflow Orchestrator</h2>
-          <p className="text-gray-600">Orquestração automática com agentes OpenAI</p>
-        </div>
-        
-        <div className="flex items-center space-x-4">
-          {!isConfigured && (
-            <div className="flex items-center space-x-2">
-              <input
-                type="password"
-                placeholder="OpenAI API Key"
-                value={openaiApiKey}
-                onChange={(e) => setOpenaiApiKey(e.target.value)}
-                className="px-3 py-2 border rounded-md text-sm"
-              />
-              <Button
-                onClick={() => setIsConfigured(!!openaiApiKey)}
-                size="sm"
-                className="bg-green-600 hover:bg-green-700"
-              >
-                <Settings className="w-4 h-4 mr-2" />
-                Configurar
-              </Button>
-            </div>
-          )}
-          
-          <Button
-            onClick={() => startWorkflow(demoPatientData)}
-            disabled={!isConfigured}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            <Play className="w-4 h-4 mr-2" />
-            Iniciar Workflow Demo
-          </Button>
-        </div>
+    <div className="space-y-8 max-w-6xl mx-auto">
+      {/* Header */}
+      <div className="text-center space-y-2">
+        <h1 className="text-4xl font-light text-gray-900">Orquestrador de IA</h1>
+        <p className="text-gray-500">Automação inteligente de processos cirúrgicos</p>
       </div>
 
-      {executions.length === 0 && (
-        <Card>
-          <CardContent className="text-center py-12">
-            <div className="text-gray-500">
-              <Clock className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-              <p>Nenhum workflow ativo. Configure a API OpenAI e inicie um workflow de demonstração.</p>
+      {/* Control Panel */}
+      <Card className="border-0 shadow-sm">
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Brain className="w-6 h-6 text-blue-600" />
+            <span>Controle do Workflow</span>
+          </CardTitle>
+          <CardDescription>
+            Gerencie a execução automatizada dos processos de análise
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="space-y-2">
+              <h3 className="font-medium">Status do Sistema</h3>
+              <div className="flex items-center space-x-2">
+                {isRunning ? (
+                  <Badge className="bg-blue-100 text-blue-800 border-blue-200">
+                    Executando
+                  </Badge>
+                ) : (
+                  <Badge className="bg-gray-100 text-gray-600 border-gray-200">
+                    Parado
+                  </Badge>
+                )}
+                <span className="text-sm text-gray-500">
+                  {progress}% completo
+                </span>
+              </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
+            
+            <div className="flex space-x-2">
+              <Button
+                onClick={handleStart}
+                disabled={isRunning}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                <Play className="w-4 h-4 mr-2" />
+                Iniciar
+              </Button>
+              <Button
+                onClick={handleStop}
+                variant="outline"
+                disabled={!isRunning}
+              >
+                <Pause className="w-4 h-4 mr-2" />
+                Parar
+              </Button>
+            </div>
+          </div>
 
-      {executions.map((execution) => (
-        <Card key={execution.id}>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <CardTitle className="text-lg">{execution.patientName}</CardTitle>
-                <Badge variant="outline">{execution.id}</Badge>
-                <Badge className={getStatusColor(execution.status)}>
-                  {execution.status.charAt(0).toUpperCase() + execution.status.slice(1)}
-                </Badge>
+          {isRunning && (
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>Progresso</span>
+                <span>{progress}%</span>
               </div>
-              <div className="text-sm text-gray-500">
-                Iniciado: {execution.startTime.toLocaleTimeString('pt-BR')}
-              </div>
+              <Progress value={progress} className="h-2" />
             </div>
-            <CardDescription>
-              {execution.procedure}
-            </CardDescription>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Workflow Steps */}
+      <Card className="border-0 shadow-sm">
+        <CardHeader>
+          <CardTitle>Etapas do Workflow</CardTitle>
+          <CardDescription>
+            Acompanhe o progresso de cada etapa do processo
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {workflowSteps.map((step, index) => (
+              <div
+                key={step.id}
+                className="flex items-start space-x-4 p-4 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex-shrink-0 mt-1">
+                  {getStatusIcon(step.status)}
+                </div>
+                
+                <div className="flex-grow space-y-1">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-medium text-gray-900">
+                      {step.id}. {step.name}
+                    </h3>
+                    <Badge className={getStatusColor(step.status)}>
+                      {step.status === 'completed' && 'Concluído'}
+                      {step.status === 'running' && 'Executando'}
+                      {step.status === 'pending' && 'Pendente'}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-gray-600">{step.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* AI Agents Status */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="border-0 shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">Agente Demográfico</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div>
-                <div className="flex items-center justify-between text-sm mb-2">
-                  <span>Progresso Geral</span>
-                  <span>{Math.round(execution.progress)}%</span>
-                </div>
-                <Progress value={execution.progress} className="h-2" />
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Status</span>
+                <Badge className="bg-green-100 text-green-800 border-green-200">
+                  Ativo
+                </Badge>
               </div>
-
-              <div className="space-y-3">
-                <h4 className="font-medium text-gray-900">Etapas do Workflow</h4>
-                {execution.steps.map((step) => (
-                  <div
-                    key={step.id}
-                    className={`flex items-center justify-between p-3 rounded-lg border ${
-                      step.status === 'running' ? 'bg-blue-50 border-blue-200' : 
-                      step.status === 'error' ? 'bg-red-50 border-red-200' :
-                      step.status === 'completed' ? 'bg-green-50 border-green-200' :
-                      'bg-gray-50'
-                    }`}
-                  >
-                    <div className="flex items-center space-x-3">
-                      {getStepIcon(step.status)}
-                      <div>
-                        <span className="font-medium">{step.name}</span>
-                        <div className="text-xs text-gray-500">{step.agent}</div>
-                      </div>
-                      {step.error && (
-                        <AlertCircle className="w-4 h-4 text-red-600" />
-                      )}
-                    </div>
-                    <div className="text-sm text-gray-600">
-                      {step.duration ? `${step.duration}ms` : 
-                       step.status === 'running' ? 'Executando...' :
-                       step.status === 'error' ? 'Erro' : 'Pendente'}
-                    </div>
-                  </div>
-                ))}
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Última execução</span>
+                <span className="text-sm text-gray-500">2 min atrás</span>
               </div>
-
-              {execution.status === 'error' && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                  <div className="flex items-center space-x-2">
-                    <AlertCircle className="w-5 h-5 text-red-600" />
-                    <span className="font-medium text-red-800">Erro no Workflow</span>
-                  </div>
-                  <p className="text-red-700 text-sm mt-1">
-                    Verifique as configurações da API e tente novamente.
-                  </p>
-                </div>
-              )}
             </div>
           </CardContent>
         </Card>
-      ))}
+
+        <Card className="border-0 shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">Agente Clínico</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Status</span>
+                <Badge className="bg-blue-100 text-blue-800 border-blue-200">
+                  Executando
+                </Badge>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Última execução</span>
+                <span className="text-sm text-gray-500">agora</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">Agente Final</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Status</span>
+                <Badge className="bg-gray-100 text-gray-600 border-gray-200">
+                  Aguardando
+                </Badge>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Última execução</span>
+                <span className="text-sm text-gray-500">5 min atrás</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
