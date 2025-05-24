@@ -1,3 +1,4 @@
+
 export interface OpenAIMessage {
   role: 'developer' | 'user' | 'assistant';
   content: string | Array<{ type: string; text?: string; image_url?: string }>;
@@ -92,7 +93,7 @@ export class OpenAIService {
     ];
     
     const payload: OpenAIResponsePayload = {
-      model: 'gpt-4o-mini',
+      model: 'gpt-4.1',
       instructions: systemInstructions,
       input: inputMessages,
       response_format: { type: 'json_object' },
