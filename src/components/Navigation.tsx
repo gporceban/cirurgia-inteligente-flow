@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Home, Calendar, Clock, FileText, Shield, MessageSquare, ChevronDown, Activity } from 'lucide-react';
+import { Home, Clock, FileText, ChevronDown, Activity } from 'lucide-react';
 
 export const Navigation = () => {
   const location = useLocation();
@@ -20,9 +20,6 @@ export const Navigation = () => {
     { path: '/', label: 'Dashboard', icon: Home },
     { path: '/capture', label: 'Captura de Dados', icon: FileText },
     { path: '/orchestrator', label: 'IA Orquestrador', icon: Clock },
-    { path: '/communication', label: 'Comunicação', icon: MessageSquare },
-    { path: '/calendar', label: 'Agenda', icon: Calendar },
-    { path: '/compliance', label: 'Conformidade', icon: Shield },
   ];
 
   const getCurrentPageLabel = () => {

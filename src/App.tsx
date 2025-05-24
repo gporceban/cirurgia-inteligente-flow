@@ -8,9 +8,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { SurgicalDashboard } from '@/components/SurgicalDashboard';
 import { DataCapture } from '@/components/DataCapture';
 import { AIOrchestrator } from '@/components/AIOrchestrator';
-import { PatientCommunication } from '@/components/PatientCommunication';
-import { ComplianceModule } from '@/components/ComplianceModule';
-import { CalendarIntegration } from '@/components/CalendarIntegration';
 import { Navigation } from '@/components/Navigation';
 import NotFound from "./pages/NotFound";
 
@@ -37,9 +34,6 @@ const App: React.FC = () => {
                 <Route path="/" element={<SurgicalDashboard />} />
                 <Route path="/capture" element={<DataCapture />} />
                 <Route path="/orchestrator" element={<AIOrchestrator />} />
-                <Route path="/communication" element={<PatientCommunication />} />
-                <Route path="/compliance" element={<ComplianceModule />} />
-                <Route path="/calendar" element={<CalendarIntegration />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </main>
