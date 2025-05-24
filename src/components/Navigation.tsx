@@ -18,6 +18,7 @@ export const Navigation = () => {
   const navItems = [
     { path: '/', label: 'Dashboard', icon: Home },
     { path: '/capture', label: 'Captura de Dados', icon: FileText },
+    { path: '/surgical-request', label: 'Nova Solicitação', icon: Activity },
     { path: '/orchestrator', label: 'IA Orquestrador', icon: Clock },
     { path: '/post-operative', label: 'Pós-Operatório', icon: Heart },
   ];

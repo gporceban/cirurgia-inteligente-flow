@@ -1045,69 +1045,6 @@ export type Database = {
         }
         Relationships: []
       }
-      surgery_requests: {
-        Row: {
-          created_at: string
-          diagnosis: string
-          doctor_id: string
-          icd10_code: string
-          id: number
-          image_url: string | null
-          notion_id: string | null
-          opme: Json | null
-          patient_cpf: string
-          patient_dob: string | null
-          patient_email: string
-          patient_health_plan: string | null
-          patient_name: string
-          patient_phone: string | null
-          procedure_code: string
-          procedure_text: string
-          request_text: string
-          status: string
-        }
-        Insert: {
-          created_at?: string
-          diagnosis: string
-          doctor_id: string
-          icd10_code: string
-          id?: number
-          image_url?: string | null
-          notion_id?: string | null
-          opme?: Json | null
-          patient_cpf: string
-          patient_dob?: string | null
-          patient_email: string
-          patient_health_plan?: string | null
-          patient_name: string
-          patient_phone?: string | null
-          procedure_code: string
-          procedure_text: string
-          request_text: string
-          status?: string
-        }
-        Update: {
-          created_at?: string
-          diagnosis?: string
-          doctor_id?: string
-          icd10_code?: string
-          id?: number
-          image_url?: string | null
-          notion_id?: string | null
-          opme?: Json | null
-          patient_cpf?: string
-          patient_dob?: string | null
-          patient_email?: string
-          patient_health_plan?: string | null
-          patient_name?: string
-          patient_phone?: string | null
-          procedure_code?: string
-          procedure_text?: string
-          request_text?: string
-          status?: string
-        }
-        Relationships: []
-      }
       surgical_requests: {
         Row: {
           approved_at: string | null
