@@ -1,4 +1,3 @@
-
 export interface OpenAIMessage {
   role: 'developer' | 'user' | 'assistant';
   content: string | Array<{ type: string; text?: string; image_url?: string }>;
@@ -84,10 +83,18 @@ export class OpenAIService {
   ): Promise<any> {
     const systemInstructions = this.getAgentInstructions(agentRole);
     
+    // Format the workflow data as proper input messages
+    const inputMessages: OpenAIMessage[] = [
+      {
+        role: 'user',
+        content: JSON.stringify(workflowData)
+      }
+    ];
+    
     const payload: OpenAIResponsePayload = {
-      model: 'gpt-4.1',
+      model: 'gpt-4o-mini',
       instructions: systemInstructions,
-      input: workflowData,
+      input: inputMessages,
       response_format: { type: 'json_object' },
       temperature: 0.3,
       tools: this.getAgentTools(agentRole),
